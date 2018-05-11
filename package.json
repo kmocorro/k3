@@ -11,6 +11,7 @@
   "dependencies": {
     "express": "^4.16.3",
     "serialport": "^6.2.0",
-    "sf": "^0.1.9"
+    "sf": "^0.1.9",
+    "socket.io-client": "^2.1.0"
   }
 }
