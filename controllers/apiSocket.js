@@ -3,7 +3,7 @@ const moment = require('moment');
 
 module.exports = function(io){
 
-    const socket = io('http://localhost:3030', { // Shards server
+    const socket = io('http://localhost:3030', { // Connect to Shards server
         path: '/socketserver'
     });
 
@@ -40,48 +40,71 @@ module.exports = function(io){
             }
         });
 
+        
+            let isLoaderCount = 0;
+            let isUnloaderCount = 0;
+        
             const parser = port.pipe(new ByteLength({ length: 4 })); // Piping data from PLC, plc sends 4 byte data [STX] 2 3 [ETX].
         
             parser.on('data', function(data){ // Parse data from the port.
                 //console.log(data);
-                let rawData = data.toString();
-                let rawDataRefined = rawData.slice(1, 3);
-                
-                /**
-                 *  ===== PLC to SerialPort data param =====
-                 * 
-                 *  L0 -- param from Loader sensor
-                 *  U1 -- param from Unloader sensor
-                 * 
-                 */
-            
-                if(rawDataRefined == 'L0'){ // If data signal is from the Loader,
+                if(data){
 
-                    let signalFromLoader = {
-                        data_uuid: uuidv1(),
-                        date_time: moment(new Date()).format(),
-                        tool_id: toolSettings.tool_name,
-                        param: rawDataRefined,
-                        position: 'LOADER',
-                        value: 1
-                    }
-
-                    socket.emit('device_data', signalFromLoader); // Send sinalFromLoader object to Shards Server.
-
-                } else if (rawDataRefined == 'U1'){ // Else if data signal is from the Unloader,
-
-                    let signalFromUnloader = {
-                        data_uuid: uuidv1(),
-                        date_time: moment(new Date()).format(),
-                        tool_id: toolSettings.tool_name,
-                        param: rawDataRefined,
-                        position: 'UNLOADER',
-                        value: 1
-                    }
+                    let rawData = data.toString();
+                    let rawDataRefined = rawData.slice(1, 3);
                     
-                    socket.emit('device_data', signalFromUnloader); // Send sinalFromUnloader object to Shards Server.
+                    /**
+                     *  ===== PLC to SerialPort data param =====
+                     * 
+                     *  L0 -- param from Loader sensor
+                     *  U1 -- param from Unloader sensor
+                     * 
+                     */
+
+                    if(rawDataRefined == 'L0'){ // If data signal is from the Loader,
+
+                        isLoaderCount = isLoaderCount + 1;
+                        console.log('Loader: ', isLoaderCount);
+                        if(isLoaderCount == 50){
+                            console.log('Loader sending input to server...');
+                            let signalFromLoader = {
+                                data_uuid: uuidv1(),
+                                date_time: moment(new Date()).format(),
+                                tool_id: toolSettings.tool_name,
+                                param: rawDataRefined,
+                                position: 'LOADER',
+                                value: 50
+                            }
+
+                            socket.emit('device_data', signalFromLoader); // Send sinalFromLoader object to Shards Server.
+                            isLoaderCount = 0;
+                        }
+                        
+                    } else if (rawDataRefined == 'U1'){ // Else if data signal is from the Unloader,
+
+                        isUnloaderCount = isUnloaderCount + 1;
+
+                        console.log('Unloader: ', isUnloaderCount);
+                        if(isUnloaderCount == 50){
+                            
+                            console.log('Unloader sending outs to server...');
+                            let signalFromUnloader = {
+                                data_uuid: uuidv1(),
+                                date_time: moment(new Date()).format(),
+                                tool_id: toolSettings.tool_name,
+                                param: rawDataRefined,
+                                position: 'UNLOADER',
+                                value: 50
+                            }
+
+                            socket.emit('device_data', signalFromUnloader); // Send sinalFromUnloader object to Shards Server.
+                            isUnloaderCount = 0;
+                        }
+                        
+                    }
+
                 }
-            
+
             });
 
         port.on('close', function(){ // port event listener when disconnected invoke reconenct
