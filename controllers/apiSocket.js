@@ -41,8 +41,8 @@ module.exports = function(io){
         });
 
         
-            let isLoaderCount = 0;
-            let isUnloaderCount = 0;
+        //    let isLoaderCount = 0;
+        //    let isUnloaderCount = 0;
         
             const parser = port.pipe(new ByteLength({ length: 4 })); // Piping data from PLC, plc sends 4 byte data [STX] 2 3 [ETX].
         
@@ -63,10 +63,11 @@ module.exports = function(io){
 
                     if(rawDataRefined == 'L0'){ // If data signal is from the Loader,
 
-                        isLoaderCount = isLoaderCount + 1;
-                        console.log('Loader: ', isLoaderCount);
-                        if(isLoaderCount == 50){
-                            console.log('Loader sending input to server...');
+                    //    isLoaderCount = isLoaderCount + 1;
+                    //    console.log('Loader: ', isLoaderCount);
+
+                    //    if(isLoaderCount == 50){
+                    //        console.log('Loader sending input to server...');
                             let signalFromLoader = {
                                 data_uuid: uuidv1(),
                                 date_time: moment(new Date()).format(),
@@ -78,16 +79,16 @@ module.exports = function(io){
 
                             socket.emit('device_data', signalFromLoader); // Send sinalFromLoader object to Shards Server.
                             isLoaderCount = 0;
-                        }
+                    //    }
                         
                     } else if (rawDataRefined == 'U1'){ // Else if data signal is from the Unloader,
 
-                        isUnloaderCount = isUnloaderCount + 1;
+                    //    isUnloaderCount = isUnloaderCount + 1;
 
-                        console.log('Unloader: ', isUnloaderCount);
-                        if(isUnloaderCount == 50){
+                    //    console.log('Unloader: ', isUnloaderCount);
+                    //    if(isUnloaderCount == 50){
                             
-                            console.log('Unloader sending outs to server...');
+                    //        console.log('Unloader sending outs to server...');
                             let signalFromUnloader = {
                                 data_uuid: uuidv1(),
                                 date_time: moment(new Date()).format(),
@@ -99,7 +100,7 @@ module.exports = function(io){
 
                             socket.emit('device_data', signalFromUnloader); // Send sinalFromUnloader object to Shards Server.
                             isUnloaderCount = 0;
-                        }
+                    //    }
                         
                     }
 
